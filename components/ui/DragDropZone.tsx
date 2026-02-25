@@ -24,7 +24,7 @@ export default function DragDropZone({
       {...getRootProps()}
       className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all ${
         isDragActive
-          ? 'border-lime-400 bg-lime-50'
+          ? 'border-teal-400 bg-teal-50'
           : 'border-gray-300 hover:border-gray-400 bg-gray-50'
       }`}
     >
@@ -35,7 +35,7 @@ export default function DragDropZone({
       >
         <Upload
           className={`w-12 h-12 ${
-            isDragActive ? 'text-lime-400' : 'text-gray-400'
+            isDragActive ? 'text-teal-400' : 'text-gray-400'
           }`}
         />
         <div>

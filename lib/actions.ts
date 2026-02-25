@@ -131,6 +131,94 @@ Please be concise and practical in your analysis.`
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Medical Document Explainer
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function analyzeMedicalDocument(
+  formData: FormData,
+  language = 'en',
+  context = ''
+) {
+  const LANGUAGE_NAMES: Record<string, string> = {
+    en: 'English', hi: 'Hindi', as: 'Assamese', bn: 'Bengali',
+    ta: 'Tamil', te: 'Telugu', kn: 'Kannada', mr: 'Marathi',
+    gu: 'Gujarati', pa: 'Punjabi',
+  }
+  const languageName = LANGUAGE_NAMES[language] ?? 'English'
+
+  const SCRIPT_HINTS: Record<string, string> = {
+    as: `CRITICAL — You are writing in Assamese (Asamiya), NOT Bengali. Strictly follow Assamese orthography:
+- Use ৰ (Assamese ra) — never র (Bengali ra)
+- Use ৱ (Assamese wa) — never ব for the wa-sound
+- Use হ'ব, কৰিব, যোৱা, আহিব style Assamese verb forms
+- Do NOT use Bengali verb endings (-ছে, -বে) or Bengali-only vocabulary
+- Write naturally in Assamese as spoken in Assam`,
+  }
+  const scriptHint = SCRIPT_HINTS[language] ?? ''
+
+  try {
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) throw new Error('GEMINI_API_KEY environment variable is not set')
+
+    const client = new GoogleGenerativeAI(apiKey)
+    const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' })
+
+    const files = formData.getAll('files') as File[]
+    if (!files || files.length === 0) throw new Error('No files provided')
+
+    const analysisResults = []
+
+    for (const file of files) {
+      try {
+        const arrayBuffer = await file.arrayBuffer()
+        const buffer = Buffer.from(arrayBuffer)
+        const mimeType = file.type || 'application/octet-stream'
+        const generativePart = await fileToGenerativePart(buffer, mimeType)
+
+        const prompt = `You are a healthcare assistant helping a patient quickly understand their medical document.
+Look at the document and respond with SHORT, PLAIN bullet points ONLY.
+
+YOUR STYLE — two rules that must always be applied together:
+
+1. THE "SO WHAT?" RULE — never just state a number or define a test. Always say what it means for the patient.
+   BAD: "Your HbA1c is 7.5%."
+   GOOD: "Your average blood sugar is above the target range, which usually means your diabetes management needs a review."
+
+2. THE "NUDGE NOT DIAGNOSE" RULE — you cannot make a diagnosis, but you can connect a finding to a possible symptom and prompt a question.
+   BAD: "You have anemia."
+   GOOD: "Your iron levels appear low — worth asking your doctor if this could explain any recent tiredness."
+
+FORMAT RULES:
+- Bullet points only. Do NOT use bullet symbols (•, -, *).
+- Max 6 bullets total (excluding the final disclaimer bullet).
+- Each bullet: ONE sentence, max 20 words.
+- Plain everyday words only — if a medical term is unavoidable, add a plain explanation in brackets immediately after.
+- Do NOT recommend any specific treatment, drug, or dosage.
+- End with exactly this disclaimer bullet: "⚠ This is not medical advice — please discuss these results with your doctor."
+- Write ENTIRELY in ${languageName}.
+${scriptHint ? `\n${scriptHint}` : ''}
+${context ? `\nPatient note: ${context}` : ''}
+
+Document: [attached image]`
+
+        const result = await model.generateContent([prompt, generativePart])
+        const responseText = result.response.text() || 'No explanation available'
+
+        analysisResults.push({ fileName: file.name, analysis: responseText, success: true })
+      } catch (fileError) {
+        const error = fileError as Error
+        analysisResults.push({ fileName: file.name, error: error.message, success: false })
+      }
+    }
+
+    return { success: true, data: analysisResults, message: `Explained ${files.length} document(s)` }
+  } catch (err) {
+    const error = err as Error
+    return { success: false, error: error.message, data: null }
+  }
+}
+
 export async function analyzeMedicalInsuranceDocs(formData: FormData) {
   try {
     const apiKey = process.env.GEMINI_API_KEY
