@@ -8,54 +8,69 @@ export default function About() {
             Powerful Features
           </h2>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Everything you need to understand your food in one intelligent platform
+            Everything you need to understand your medical documents in one intelligent platform
           </p>
         </div>
 
         {/* Feature boxes grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Prescription Analysis Box */}
-          <div className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow">
-            <div className="flex items-center justify-center h-16 w-16 rounded-lg bg-lime-200 mb-6">
-              <svg className="w-8 h-8 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Lab Reports */}
+          <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+            <div className="flex items-center justify-center h-14 w-14 rounded-lg bg-teal-100 mb-5">
+              <svg className="w-7 h-7 text-teal-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-black mb-3">
-              Food Label Analysis
+            <h3 className="text-xl font-bold text-black mb-2">
+              Lab Report Analysis
             </h3>
-            <p className="text-gray-600 leading-relaxed">
-              Upload food labels and get instant AI-powered analysis. Our smart system decodes ingredients, nutrition facts, and provides personalized insights about what you eat.
+            <p className="text-gray-600 text-sm leading-relaxed">
+              Upload blood tests or imaging reports. Get plain-language explanations of every value — no medical degree needed.
             </p>
           </div>
 
-          {/* Voice Reply Support Box */}
-          <div className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow">
-            <div className="flex items-center justify-center h-16 w-16 rounded-lg bg-lime-200 mb-6">
-              <svg className="w-8 h-8 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {/* Insurance Checker */}
+          <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+            <div className="flex items-center justify-center h-14 w-14 rounded-lg bg-purple-100 mb-5">
+              <svg className="w-7 h-7 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-black mb-2">
+              Insurance Checker
+            </h3>
+            <p className="text-gray-600 text-sm leading-relaxed">
+              Upload your policy + hospital estimate. Our AI flags likely rejections, checks room-rent limits, and tells you exactly what to do next.
+            </p>
+          </div>
+
+          {/* Multilingual Voice */}
+          <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+            <div className="flex items-center justify-center h-14 w-14 rounded-lg bg-teal-100 mb-5">
+              <svg className="w-7 h-7 text-teal-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4" />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-black mb-3">
-              Voice Reply Support
+            <h3 className="text-xl font-bold text-black mb-2">
+              Multilingual Voice
             </h3>
-            <p className="text-gray-600 leading-relaxed">
-              Get responses in natural, conversational voice. Ask food questions and receive clear audio explanations, making nutrition info more accessible and personal.
+            <p className="text-gray-600 text-sm leading-relaxed">
+              Hear explanations read aloud in 10 Indian languages — Hindi, Bengali, Assamese, Tamil, and more — powered by ElevenLabs voice AI.
             </p>
           </div>
 
-          {/* Reminder Box */}
-          <div className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow">
-            <div className="flex items-center justify-center h-16 w-16 rounded-lg bg-lime-200 mb-6">
-              <svg className="w-8 h-8 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          {/* Privacy First */}
+          <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+            <div className="flex items-center justify-center h-14 w-14 rounded-lg bg-amber-100 mb-5">
+              <svg className="w-7 h-7 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
-            <h3 className="text-2xl font-bold text-black mb-3">
-              Personalized Results
+            <h3 className="text-xl font-bold text-black mb-2">
+              Privacy & Safety
             </h3>
-            <p className="text-gray-600 leading-relaxed">
-              Never miss dietary goals. Get intelligent suggestions tailored to your preferences, helping you stay on track with your nutrition goals.
+            <p className="text-gray-600 text-sm leading-relaxed">
+              Documents are never stored. Every result carries a clear disclaimer — AI explanations are for education only, not a substitute for your doctor.
             </p>
           </div>
         </div>

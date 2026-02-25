@@ -17,13 +17,20 @@ export async function POST(request: NextRequest) {
     const ts = new Date().toISOString().replace(/[:.]/g, "-");
     const filename = `tts_${ts}.mp3`;
 
-    const audioBuffer = await generateAudio(text, { language: language ?? "en" });
+    // ============================================================
+    // ⚠️  TESTING ONLY — REMOVE BEFORE PRODUCTION
+    //     Gemini response is sliced to first 100 characters
+    //     before being sent to ElevenLabs to conserve API quota.
+    //     Remove `maxChars: 100` (or the whole option object) when
+    //     you are ready to send the full explanation to TTS.
+    // ============================================================
+    const audioBuffer = await generateAudio(text, { language: language ?? "en", maxChars: 100 });
 
-    return new NextResponse(audioBuffer, {
+    return new NextResponse(new Uint8Array(audioBuffer), {
       status: 200,
       headers: {
         "Content-Type": "audio/mpeg",
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Disposition": `inline; filename="${filename}"`,
         "Content-Length": String(audioBuffer.byteLength),
         "Cache-Control": "no-store",
       },

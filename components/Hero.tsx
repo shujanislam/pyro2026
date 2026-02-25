@@ -40,10 +40,10 @@ export default function Hero() {
       className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-white"
     >
       {/* Subtle gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white via-lime-100/10 to-white" />
+      <div className="absolute inset-0 bg-linear-to-br from-white via-teal-50/20 to-white" />
 
       <motion.div
-        className="absolute top-20 left-10 w-24 h-24 rounded-full bg-lime-400/20 blur-3xl"
+        className="absolute top-20 left-10 w-24 h-24 rounded-full bg-teal-400/20 blur-3xl"
         animate={{
           x: [0, 30, 0],
           y: [0, -20, 0],
@@ -52,7 +52,7 @@ export default function Hero() {
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="absolute bottom-40 right-20 w-32 h-32 rounded-full bg-lime-300/10 blur-3xl"
+        className="absolute bottom-40 right-20 w-32 h-32 rounded-full bg-teal-300/10 blur-3xl"
         animate={{
           x: [0, -40, 0],
           y: [0, 30, 0],
@@ -61,7 +61,7 @@ export default function Hero() {
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 pt-24 pb-12">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-24 pb-12 w-full">
         <div className="grid lg:grid-cols-2 gap-8 items-center">
           {/* Text Content */}
           <motion.div style={{ opacity }} className="space-y-5">
@@ -72,17 +72,17 @@ export default function Hero() {
               className="inline-flex items-center gap-2 bg-black text-white px-3 py-1.5 rounded-full text-xs font-mono tracking-wider"
             >
               <motion.span
-                className="w-2 h-2 bg-lime-400 rounded-full"
+                className="w-2 h-2 bg-teal-400 rounded-full"
                 animate={{ scale: [1, 1.2, 1], opacity: [1, 0.7, 1] }}
                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               />
-              AI-POWERED FOOD PLATFORM
+              AI-POWERED MEDICAL CLARITY
             </motion.div>
 
             <div className="space-y-1 overflow-hidden">
               <motion.h1
                 style={{ x: textX1 }}
-                className="text-5xl md:text-7xl font-black tracking-tighter text-black leading-[0.9]"
+                className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tighter text-black leading-[0.9] overflow-hidden"
               >
                 <motion.span
                   initial={{ opacity: 0, y: 40 }}
@@ -90,20 +90,20 @@ export default function Hero() {
                   transition={{ delay: 0.1, duration: 0.8 }}
                   className="inline-block"
                 >
-                  FOOD LABELS
+                  MEDICAL DOCS
                 </motion.span>
               </motion.h1>
               <motion.h1
                 style={{ x: textX2 }}
-                className="text-5xl md:text-7xl font-black tracking-tighter text-black leading-[0.9]"
+                className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tighter text-black leading-[0.9] overflow-hidden"
               >
                 <motion.span
                   initial={{ opacity: 0, y: 40 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2, duration: 0.8 }}
-                  className="inline-block text-lime-400"
+                  className="inline-block text-teal-500"
                 >
-                  REIMAGINED
+                  EXPLAINED
                 </motion.span>
               </motion.h1>
               <motion.p
@@ -112,7 +112,7 @@ export default function Hero() {
                 transition={{ delay: 0.3, duration: 0.8 }}
                 className="text-lg md:text-xl font-mono text-gray-600 tracking-tight pt-2 max-w-md"
               >
-                Intelligent analysis. Instant insights. Your food, simplified.
+                Upload lab reports or discharge summaries. Get plain-language explanations in your language.
               </motion.p>
             </div>
 
@@ -124,12 +124,12 @@ export default function Hero() {
             >
               <motion.button
                 onClick={openTryNow}
-                className="bg-black text-lime-400 px-6 py-3 rounded-full font-bold text-sm tracking-wide flex items-center gap-2 group relative overflow-hidden hover:bg-gray-900"
+                className="bg-black text-teal-400 px-6 py-3 rounded-full font-bold text-sm tracking-wide flex items-center gap-2 group relative overflow-hidden hover:bg-gray-900"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full"
+                  className="absolute inset-0 bg-linear-to-r from-transparent via-white/30 to-transparent -translate-x-full"
                   whileHover={{ x: "200%" }}
                   transition={{ duration: 0.6 }}
                 />
@@ -147,7 +147,7 @@ export default function Hero() {
               </motion.button>
               <motion.button
                 className="border-2 border-black text-black px-6 py-3 rounded-full font-bold text-sm tracking-wide relative overflow-hidden"
-                whileHover={{ scale: 1.02, backgroundColor: "#000", color: "#bef264" }}
+                whileHover={{ scale: 1.02, backgroundColor: "#000", color: "#2dd4bf" }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => {
                   const demoSection = document.querySelector('#demo');
@@ -164,7 +164,7 @@ export default function Hero() {
               transition={{ delay: 0.8, duration: 0.8 }}
               className="flex flex-wrap gap-4 pt-2"
             >
-              {["AI Analysis","Personalized Results", "Voice Support", "24/7 Available"].map((benefit, i) => (
+              {["AI Analysis", "10 Indian Languages", "Voice Readout", "Privacy First"].map((benefit, i) => (
                 <motion.div
                   key={benefit}
                   className="flex items-center gap-2 text-xs font-mono text-gray-600"
@@ -172,15 +172,15 @@ export default function Hero() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.8 + i * 0.1 }}
                 >
-                  <div className="w-1.5 h-1.5 bg-lime-400 rounded-full" />
+                  <div className="w-1.5 h-1.5 bg-teal-400 rounded-full" />
                   {benefit}
                 </motion.div>
               ))}
             </motion.div>
           </motion.div>
 
-          {/* Right side - Image/Doctor */}
-          <motion.div style={{ y, scale }} className="relative flex justify-center">
+          {/* Right side - Image/Doctor (hidden on mobile, shown md+) */}
+          <motion.div style={{ y, scale }} className="relative hidden lg:flex justify-center">
             <motion.div
               initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
@@ -188,7 +188,7 @@ export default function Hero() {
               className="relative"
             >
               <motion.div
-                className="absolute inset-0 bg-lime-400/30 blur-[80px] rounded-full scale-75"
+                className="absolute inset-0 bg-teal-400/30 blur-[80px] rounded-full scale-75"
                 animate={{
                   scale: [0.75, 0.85, 0.75],
                   opacity: [0.3, 0.5, 0.3],
