@@ -288,3 +288,117 @@ If data is missing, politely ask for the "Policy Schedule."`
     }
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Prescription Medicine Extractor  (structured JSON output for ICS export)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface MedicineSchedule {
+  /** Full medicine name with dosage, e.g. "Amoxicillin 500mg" */
+  name: string
+  /** Human-readable duration, e.g. "7 days" */
+  duration: string
+  /** Duration as integer days (used for RRULE COUNT) */
+  durationDays: number
+  /** Human-readable frequency, e.g. "Twice daily" */
+  frequency: string
+  /**
+   * Timings in 24-hour HH:MM format.
+   * Extracted from prescription text or inferred from frequency.
+   * Empty array → no calendar event should be created.
+   */
+  timings: string[]
+}
+
+export interface PrescriptionAnalysisResult {
+  success: boolean
+  medicines?: MedicineSchedule[]
+  error?: string
+}
+
+export async function analyzePrescription(
+  formData: FormData,
+): Promise<PrescriptionAnalysisResult> {
+  try {
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) throw new Error('GEMINI_API_KEY environment variable is not set')
+
+    const client = new GoogleGenerativeAI(apiKey)
+    const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' })
+
+    const files = formData.getAll('files') as File[]
+    if (!files || files.length === 0) throw new Error('No files provided')
+
+    // Combine all uploaded prescription pages into one request
+    const generativeParts = await Promise.all(
+      files.map(async (file) => {
+        const arrayBuffer = await file.arrayBuffer()
+        const buffer = Buffer.from(arrayBuffer)
+        return fileToGenerativePart(buffer, file.type || 'application/octet-stream')
+      }),
+    )
+
+    const prompt = `You are a medical prescription parser. Extract every medicine from the attached prescription and return ONLY a single valid JSON object — no markdown, no code fences, no explanation.
+
+Return this exact structure:
+{
+  "medicines": [
+    {
+      "name": "Full medicine name with dosage (e.g. Amoxicillin 500mg)",
+      "duration": "Duration as written (e.g. '7 days', '2 weeks', '1 month')",
+      "durationDays": <integer — 7 for 7 days, 14 for 2 weeks, 30 for 1 month, 90 for 3 months>,
+      "frequency": "Human-readable frequency (e.g. 'Twice daily', '3 times a day', 'Once daily at bedtime')",
+      "timings": ["HH:MM", "HH:MM"]
+    }
+  ]
+}
+
+TIMING RULES (strictly follow):
+1. If exact clock times are written (e.g. "8am, 2pm, 8pm"), convert to 24-hour HH:MM and use those exact values.
+2. If only a frequency/instruction is given (no clock times), infer standard pharmacy times:
+   - Once daily  → ["08:00"]
+   - Twice daily  → ["08:00", "20:00"]
+   - Three times daily → ["08:00", "14:00", "20:00"]
+   - Four times daily  → ["06:00", "12:00", "18:00", "22:00"]
+   - Before meals (3x) → ["07:30", "12:30", "19:00"]
+   - After meals (3x)  → ["09:00", "14:00", "21:00"]
+   - At bedtime        → ["22:00"]
+   - Morning only      → ["08:00"]
+   - Evening only      → ["20:00"]
+3. If there is truly NO timing or frequency information for a medicine, set timings to [].
+4. Never omit the timings field. Never set it to null.
+
+durationDays rules:
+- "X days"   → X
+- "X weeks"  → X × 7
+- "X months" → X × 30
+- "as needed" / "SOS" / unknown → 30
+
+Return ONLY the JSON. Nothing else.`
+
+    const result = await model.generateContent([prompt, ...generativeParts])
+    let responseText = result.response.text().trim()
+
+    // Strip markdown code fences if the model added them anyway
+    responseText = responseText
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```$/i, '')
+      .trim()
+
+    const parsed = JSON.parse(responseText)
+    const medicines: MedicineSchedule[] = (parsed.medicines ?? []).map(
+      (m: Partial<MedicineSchedule>) => ({
+        name: m.name ?? 'Unknown medicine',
+        duration: m.duration ?? 'Unknown',
+        durationDays: typeof m.durationDays === 'number' ? m.durationDays : 30,
+        frequency: m.frequency ?? 'As prescribed',
+        timings: Array.isArray(m.timings) ? m.timings : [],
+      }),
+    )
+
+    return { success: true, medicines }
+  } catch (err) {
+    const error = err as Error
+    return { success: false, error: error.message }
+  }
+}

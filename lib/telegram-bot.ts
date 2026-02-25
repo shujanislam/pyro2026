@@ -19,7 +19,7 @@
  */
 
 import { Bot, Context, InlineKeyboard, InputFile } from 'grammy'
-import { analyzeBloodReportBuffer } from './actions.ts'
+import { analyzeBloodReportBuffer } from './actions'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Language config

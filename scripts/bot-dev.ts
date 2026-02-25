@@ -11,7 +11,7 @@
  *   APP_URL=http://localhost:3000
  */
 
-import { createBot } from '../lib/telegram-bot.ts'
+import { createBot } from '../lib/telegram-bot'
 
 async function main() {
   const bot = createBot()
