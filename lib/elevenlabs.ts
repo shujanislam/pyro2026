@@ -1,4 +1,4 @@
-const API_KEY = "sk_6bea347e07ef67e1dac2299f00e57e554aa15763f5653c32";
+const API_KEY = "sk_9b4004b082fd8c51e021ea89f3fb84c600045cc28780079f";
 
 // Hardcoded voice ID per project requirement
 const VOICE_ID = "cgSgspJ2msm6clMCkdW9";
@@ -28,6 +28,14 @@ export async function generateAudio(
 
   const language = options.language ?? "en";
 
+  // ElevenLabs character-limit safeguard for Assamese only.
+  // Keep other languages untrimmed.
+  const ELEVENLABS_ASSAMESE_MAX_CHARS = 500;
+  const textForTts =
+    language === "as" && trimmedText.length > ELEVENLABS_ASSAMESE_MAX_CHARS
+      ? trimmedText.slice(0, ELEVENLABS_ASSAMESE_MAX_CHARS)
+      : trimmedText;
+
   const response = await fetch(
     `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`,
     {
@@ -38,7 +46,7 @@ export async function generateAudio(
         "xi-api-key": trimmedKey,
       },
       body: JSON.stringify({
-        text: trimmedText,
+        text: textForTts,
         model_id: "eleven_v3",
         language_code: language,
         voice_settings: {
