@@ -6,8 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "bot:dev": "node --env-file=.env.local --experimental-strip-types scripts/bot-dev.ts"
+    "lint": "eslint"
   },
   "dependencies": {
     "@google/genai": "^1.42.0",
@@ -15,7 +14,6 @@
     "firebase": "^12.9.0",
     "framer-motion": "^12.34.3",
     "googleapis": "^171.4.0",
-    "grammy": "^1.40.0",
     "lucide-react": "^0.575.0",
     "next": "16.1.6",
     "nodemailer": "^8.0.1",
