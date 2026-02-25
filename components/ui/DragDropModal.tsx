@@ -1,11 +1,25 @@
 'use client'
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Upload, CheckCircle, AlertCircle, Image as ImageIcon, FileText } from 'lucide-react'
+import { X, Upload, CheckCircle, AlertCircle, Image as ImageIcon, FileText, Volume2, Loader2, Download } from 'lucide-react'
 import DragDropZone from './DragDropZone'
 import FileList from './FileList'
 import { analyzeFoodLabel, analyzeMedicalInsuranceDocs } from '@/lib/actions'
 import { fetchTtsMp3 } from '@/utils/tts'
+
+/* ── Supported languages ─────────────────────────────── */
+const SUPPORTED_LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'hi', label: 'Hindi' },
+  { code: 'as', label: 'Assamese (ElevenLabs)' },
+  { code: 'bn', label: 'Bengali' },
+  { code: 'ta', label: 'Tamil' },
+  { code: 'te', label: 'Telugu' },
+  { code: 'kn', label: 'Kannada' },
+  { code: 'mr', label: 'Marathi' },
+  { code: 'gu', label: 'Gujarati' },
+  { code: 'pa', label: 'Punjabi' },
+] as const
 
 interface DragDropModalProps {
   isOpen: boolean
@@ -17,9 +31,6 @@ interface AnalysisResult {
   analysis?: string
   error?: string
   success: boolean
-  audioUrl?: string
-  audioError?: string
-  audioLoading?: boolean
 }
 
 type TabType = 'food' | 'insurance'
@@ -84,6 +95,12 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult[]>([])
   const [showResults, setShowResults] = useState(false)
   const [isDragActive, setIsDragActive] = useState(false)
+  const [language, setLanguage] = useState('en')
+
+  // Single combined audio player state
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false)
+  const [ttsError, setTtsError] = useState<string | null>(null)
 
   const activeTabConfig = TAB_CONFIG[activeTab]
 
@@ -96,54 +113,28 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index))
   }
 
-  const cleanupAudioUrls = (results: AnalysisResult[]) => {
-    for (const r of results) {
-      if (r.audioUrl) {
-        try {
-          URL.revokeObjectURL(r.audioUrl)
-        } catch {
-          // ignore
-        }
-      }
+  /** Generate a single MP3 from all successful analysis texts */
+  const generateAudio = async (results: AnalysisResult[]) => {
+    const combinedText = results
+      .filter((r) => r.success && r.analysis)
+      .map((r) => r.analysis)
+      .join('\n\n')
+
+    if (!combinedText.trim()) return
+
+    setIsGeneratingAudio(true)
+    setTtsError(null)
+
+    try {
+      const blob = await fetchTtsMp3({ text: combinedText, language })
+      const url = URL.createObjectURL(blob)
+      setAudioUrl(url)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to generate audio'
+      setTtsError(msg)
+    } finally {
+      setIsGeneratingAudio(false)
     }
-  }
-
-  const generateAudioForResults = async (results: AnalysisResult[]) => {
-    const initial = results.map((r) =>
-      r.success && r.analysis
-        ? { ...r, audioLoading: true, audioError: undefined, audioUrl: undefined }
-        : r
-    )
-
-    setAnalysisResults(initial)
-
-    await Promise.all(
-      initial.map(async (result, index) => {
-        if (!result.success || !result.analysis) return
-
-        try {
-          const blob = await fetchTtsMp3({ text: result.analysis })
-          const audioUrl = URL.createObjectURL(blob)
-
-          setAnalysisResults((prev) =>
-            prev.map((p, i) =>
-              i === index
-                ? { ...p, audioLoading: false, audioUrl }
-                : p
-            )
-          )
-        } catch (err) {
-          const message = err instanceof Error ? err.message : 'Failed to generate audio'
-          setAnalysisResults((prev) =>
-            prev.map((p, i) =>
-              i === index
-                ? { ...p, audioLoading: false, audioError: message }
-                : p
-            )
-          )
-        }
-      })
-    )
   }
 
   const handleAnalyze = async () => {
@@ -151,7 +142,10 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
 
     setIsLoading(true)
     try {
-      cleanupAudioUrls(analysisResults)
+      // Clean up previous audio
+      if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null) }
+      setTtsError(null)
+
       const formData = new FormData()
       uploadedFiles.forEach((file) => {
         formData.append('files', file)
@@ -160,7 +154,7 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
       let response
 
       if (activeTab === 'food') {
-        response = await analyzeFoodLabel(formData)
+        response = await analyzeFoodLabel(formData, language)
       } else {
         response = await analyzeMedicalInsuranceDocs(formData)
       }
@@ -168,7 +162,8 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
       if (response.success && response.data) {
         setAnalysisResults(response.data)
         setShowResults(true)
-        void generateAudioForResults(response.data)
+        // Fire TTS generation in the background
+        void generateAudio(response.data)
       } else {
         setAnalysisResults([
           {
@@ -195,7 +190,10 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
   }
 
   const handleReset = () => {
-    cleanupAudioUrls(analysisResults)
+    if (audioUrl) URL.revokeObjectURL(audioUrl)
+    setAudioUrl(null)
+    setTtsError(null)
+    setIsGeneratingAudio(false)
     setUploadedFiles([])
     setAnalysisResults([])
     setShowResults(false)
@@ -279,6 +277,39 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
                     <h3 className="font-semibold text-gray-900 text-lg">
                       Analysis Results
                     </h3>
+
+                    {/* Combined audio player */}
+                    <div className="flex flex-col gap-2 p-3 bg-lime-50 border border-lime-200 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Volume2 className="w-5 h-5 text-lime-600 shrink-0" />
+                        {isGeneratingAudio && (
+                          <div className="flex items-center gap-2 text-sm text-lime-700">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Generating voice preview ({language === 'as' ? 'ElevenLabs' : 'edge-tts'})…
+                          </div>
+                        )}
+                        {!isGeneratingAudio && audioUrl && (
+                          <audio controls src={audioUrl} className="flex-1 h-8" />
+                        )}
+                        {!isGeneratingAudio && !audioUrl && !ttsError && (
+                          <span className="text-sm text-lime-600">No audio generated</span>
+                        )}
+                        {ttsError && (
+                          <span className="text-sm text-red-600">{ttsError}</span>
+                        )}
+                      </div>
+                      {!isGeneratingAudio && audioUrl && (
+                        <a
+                          href={audioUrl}
+                          download="analysis.mp3"
+                          className="inline-flex items-center gap-2 self-start px-4 py-1.5 text-sm font-semibold rounded-lg bg-lime-400 text-black hover:bg-lime-500 transition-colors"
+                        >
+                          <Download className="w-4 h-4" />
+                          Download MP3
+                        </a>
+                      )}
+                    </div>
+
                     {analysisResults.map((result, index) => (
                       <motion.div
                         key={index}
@@ -313,39 +344,6 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
                                 ? result.analysis
                                 : `Error: ${result.error}`}
                             </div>
-
-                            {result.success && (
-                              <div className="mt-4">
-                                {result.audioLoading && (
-                                  <p className="text-sm text-gray-600">
-                                    Generating MP3...
-                                  </p>
-                                )}
-
-                                {!result.audioLoading && result.audioError && (
-                                  <p className="text-sm text-red-700">
-                                    Audio error: {result.audioError}
-                                  </p>
-                                )}
-
-                                {!result.audioLoading && result.audioUrl && (
-                                  <div className="space-y-3">
-                                    <audio
-                                      controls
-                                      src={result.audioUrl}
-                                      className="w-full"
-                                    />
-                                    <a
-                                      href={result.audioUrl}
-                                      download={`${result.fileName.replace(/\.[^/.]+$/, '')}.mp3`}
-                                      className="inline-flex items-center justify-center px-4 py-2 font-semibold rounded-lg bg-lime-400 text-black hover:bg-lime-500 transition-colors"
-                                    >
-                                      Download MP3
-                                    </a>
-                                  </div>
-                                )}
-                              </div>
-                            )}
                           </div>
                         </div>
                       </motion.div>
@@ -362,6 +360,26 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
                         {activeTabConfig.description}
                       </p>
                     </div>
+
+                    {/* Language selector (food tab only) */}
+                    {activeTab === 'food' && (
+                      <div className="flex items-center gap-3">
+                        <label className="text-sm font-semibold text-gray-700 shrink-0">
+                          Voice language
+                        </label>
+                        <select
+                          value={language}
+                          onChange={(e) => setLanguage(e.target.value)}
+                          className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-lime-400"
+                        >
+                          {SUPPORTED_LANGUAGES.map((lang) => (
+                            <option key={lang.code} value={lang.code}>
+                              {lang.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
 
                     {/* Drag Drop Zone */}
                     <DragDropZone
