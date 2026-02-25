@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Menu, X } from "lucide-react"
+import DragDropModal from "./ui/DragDropModal"
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
@@ -33,6 +34,7 @@ export default function Navbar() {
 
   return (
     <>
+      <DragDropModal isOpen={isModalOpen} onClose={closeTryNow} />
       <motion.nav
         initial={{ y: -100 }}
         animate={{ y: 0 }}
