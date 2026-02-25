@@ -5,6 +5,7 @@ import { X, Upload, CheckCircle, AlertCircle, Image as ImageIcon, FileText } fro
 import DragDropZone from './DragDropZone'
 import FileList from './FileList'
 import { analyzeFoodLabel, analyzeMedicalInsuranceDocs } from '@/lib/actions'
+import { fetchTtsMp3 } from '@/utils/tts'
 
 interface DragDropModalProps {
   isOpen: boolean
@@ -16,6 +17,9 @@ interface AnalysisResult {
   analysis?: string
   error?: string
   success: boolean
+  audioUrl?: string
+  audioError?: string
+  audioLoading?: boolean
 }
 
 type TabType = 'food' | 'insurance'
@@ -92,11 +96,62 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index))
   }
 
+  const cleanupAudioUrls = (results: AnalysisResult[]) => {
+    for (const r of results) {
+      if (r.audioUrl) {
+        try {
+          URL.revokeObjectURL(r.audioUrl)
+        } catch {
+          // ignore
+        }
+      }
+    }
+  }
+
+  const generateAudioForResults = async (results: AnalysisResult[]) => {
+    const initial = results.map((r) =>
+      r.success && r.analysis
+        ? { ...r, audioLoading: true, audioError: undefined, audioUrl: undefined }
+        : r
+    )
+
+    setAnalysisResults(initial)
+
+    await Promise.all(
+      initial.map(async (result, index) => {
+        if (!result.success || !result.analysis) return
+
+        try {
+          const blob = await fetchTtsMp3({ text: result.analysis })
+          const audioUrl = URL.createObjectURL(blob)
+
+          setAnalysisResults((prev) =>
+            prev.map((p, i) =>
+              i === index
+                ? { ...p, audioLoading: false, audioUrl }
+                : p
+            )
+          )
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Failed to generate audio'
+          setAnalysisResults((prev) =>
+            prev.map((p, i) =>
+              i === index
+                ? { ...p, audioLoading: false, audioError: message }
+                : p
+            )
+          )
+        }
+      })
+    )
+  }
+
   const handleAnalyze = async () => {
     if (uploadedFiles.length === 0) return
 
     setIsLoading(true)
     try {
+      cleanupAudioUrls(analysisResults)
       const formData = new FormData()
       uploadedFiles.forEach((file) => {
         formData.append('files', file)
@@ -113,6 +168,7 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
       if (response.success && response.data) {
         setAnalysisResults(response.data)
         setShowResults(true)
+        void generateAudioForResults(response.data)
       } else {
         setAnalysisResults([
           {
@@ -139,6 +195,7 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
   }
 
   const handleReset = () => {
+    cleanupAudioUrls(analysisResults)
     setUploadedFiles([])
     setAnalysisResults([])
     setShowResults(false)
@@ -234,7 +291,7 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
                         }`}
                       >
                         <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 mt-1">
+                          <div className="shrink-0 mt-1">
                             {result.success ? (
                               <CheckCircle className="w-5 h-5 text-green-600" />
                             ) : (
@@ -256,6 +313,39 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
                                 ? result.analysis
                                 : `Error: ${result.error}`}
                             </div>
+
+                            {result.success && (
+                              <div className="mt-4">
+                                {result.audioLoading && (
+                                  <p className="text-sm text-gray-600">
+                                    Generating MP3...
+                                  </p>
+                                )}
+
+                                {!result.audioLoading && result.audioError && (
+                                  <p className="text-sm text-red-700">
+                                    Audio error: {result.audioError}
+                                  </p>
+                                )}
+
+                                {!result.audioLoading && result.audioUrl && (
+                                  <div className="space-y-3">
+                                    <audio
+                                      controls
+                                      src={result.audioUrl}
+                                      className="w-full"
+                                    />
+                                    <a
+                                      href={result.audioUrl}
+                                      download={`${result.fileName.replace(/\.[^/.]+$/, '')}.mp3`}
+                                      className="inline-flex items-center justify-center px-4 py-2 font-semibold rounded-lg bg-lime-400 text-black hover:bg-lime-500 transition-colors"
+                                    >
+                                      Download MP3
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </motion.div>
