@@ -1,4 +1,4 @@
-const API_KEY = "sk_dedcc1944800602e9995d047fc267c0a63dce99805f22699";
+const API_KEY = "sk_6bea347e07ef67e1dac2299f00e57e554aa15763f5653c32";
 
 // Hardcoded voice ID per project requirement
 const VOICE_ID = "cgSgspJ2msm6clMCkdW9";
