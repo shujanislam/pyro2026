@@ -19,7 +19,34 @@ async function fileToGenerativePart(
   }
 }
 
-export async function analyzeFoodLabel(formData: FormData) {
+export async function analyzeFoodLabel(formData: FormData, language = 'en') {
+  // Map BCP-47 code → full language name for the prompt
+  const LANGUAGE_NAMES: Record<string, string> = {
+    en: 'English',
+    hi: 'Hindi',
+    as: 'Assamese',
+    bn: 'Bengali',
+    ta: 'Tamil',
+    te: 'Telugu',
+    kn: 'Kannada',
+    mr: 'Marathi',
+    gu: 'Gujarati',
+    pa: 'Punjabi',
+  }
+  const languageName = LANGUAGE_NAMES[language] ?? 'English'
+
+  // Assamese-specific orthography hint — prevents Gemini from defaulting
+  // to Bengali conventions (same script, different letters/vocabulary).
+  const SCRIPT_HINTS: Record<string, string> = {
+    as: `You are writing in Assamese (Asamiya), NOT Bengali. Strictly follow Assamese orthography:
+- Use ৰ (Assamese ra) — never র (Bengali ra)
+- Use ৱ (Assamese wa) — never ব for the wa-sound
+- Use হ'ব, কৰিব, যোৱা, আহিব style Assamese verb forms
+- Do NOT use Bengali verb endings (-ছে, -বে) or Bengali-only vocabulary
+- Write naturally in Assamese as spoken in Assam`,
+  }
+  const scriptHint = SCRIPT_HINTS[language] ?? ''
+
   try {
     const apiKey = process.env.GEMINI_API_KEY
 
@@ -61,6 +88,8 @@ export async function analyzeFoodLabel(formData: FormData) {
 6. **Key Insights**: 2-3 bullet points about the product's nutritional profile
 7. **Recommendations**: Suggestions for consumption or alternatives if needed
 
+IMPORTANT: Respond ENTIRELY in ${languageName}. Every word of your response must be in ${languageName}.
+${scriptHint ? `\n${scriptHint}` : ''}
 Please be concise and practical in your analysis.`
 
         // Call Gemini API with the image
