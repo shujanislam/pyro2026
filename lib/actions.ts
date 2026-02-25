@@ -111,7 +111,7 @@ export async function analyzeMedicalInsuranceDocs(formData: FormData) {
     }
 
     const client = new GoogleGenerativeAI(apiKey)
-    const model = client.getGenerativeModel({ model: 'gemini-2.0-flash' })
+    const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
     const files = formData.getAll('files') as File[]
 
@@ -134,18 +134,43 @@ export async function analyzeMedicalInsuranceDocs(formData: FormData) {
         const generativePart = await fileToGenerativePart(buffer, mimeType)
 
         // Create the prompt for medical insurance document analysis
-        const prompt = `You are a medical insurance document analyst. Please analyze this insurance document image and provide:
+        const prompt = `You are an expert Health Insurance Claims Auditor. Your goal is to help users understand if their medical bills/reports will be covered by their insurance policy and to flag potential rejections before they happen.
 
-1. **Document Type**: Identify the type of document (insurance card, policy document, benefits summary, etc.)
-2. **Policy Holder Information**: Extract name, member ID, and policy number (redact sensitive info for privacy)
-3. **Coverage Details**: Main coverage types and benefits offered
-4. **Deductibles & Out-of-Pocket Limits**: If visible, extract these financial terms
-5. **Network Information**: In-network or out-of-network status
-6. **Key Benefits**: List major covered services
-7. **Contact Information**: Customer service phone number or website if available
-8. **Important Notes**: Any special conditions or requirements
+Data Inputs
 
-Please be thorough but protect sensitive personal information. Provide practical insights about the coverage.`
+[POLICY_DATA]: Extracted text from the user's Insurance Policy PDF.
+
+[MEDICAL_DATA]: Extracted text from Lab Reports, Doctor's Prescriptions, or Hospital Estimates.
+
+Task Steps
+
+Validation: Check if the hospital is "Cashless" or "Reimbursement" (if hospital name is provided).
+
+Room Rent Audit: Compare the Hospital Estimate's room charge against the Policy Limit (usually 1% of Sum Insured).
+
+Medical Necessity: Verify if the Lab Test or Surgery is "Medically Necessary" based on the Doctor's Note.
+
+Waiting Period Check: Identify if the diagnosis falls under the "2-year waiting period" based on the Policy Start Date.
+
+Deduction Alert: Flag "Non-medical consumables" (Gloves, Masks, Gowns) that the user will have to pay out-of-pocket.
+
+Output Format (Telegram Style)
+
+Status: [Covered / Partial / Rejected]
+
+Brief Summary: (One sentence explanation).
+
+The "Checklist": 3 bullet points of what to do next.
+
+Hinglish Voice Script: A 2-sentence empathetic summary in Hinglish.
+
+Guardrails
+
+DO NOT provide medical advice.
+
+ALWAYS include: "This is an AI estimate. Please verify with your TPA for the final decision."
+
+If data is missing, politely ask for the "Policy Schedule."`
 
         // Call Gemini API with the document image
         const result = await model.generateContent([
