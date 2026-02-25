@@ -72,7 +72,7 @@ export default function Footer() {
               READY TO
             </motion.span>
             <motion.span
-              className="block text-[#AFFF00]"
+              className="block text-teal-500"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -91,8 +91,7 @@ export default function Footer() {
           transition={{ delay: 0.3 }}
         >
           <p className="text-white/60 font-mono text-xs max-w-xl mx-auto leading-relaxed">
-            JaaneKhaana is a better-for-you energy drink crafted with natural flavors, zero sugar, and a clean energy
-            formula. Fuel your ambition without the crash.
+            MedClarity is your all-in ai agent to help you understand your health better.
           </p>
         </motion.div>
 
@@ -136,12 +135,12 @@ export default function Footer() {
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
             <span className="text-xl font-black">
-              <span className="text-white">Jaane</span>
-              <span className="text-[#AFFF00]">Khaana</span>
+              <span className="text-white">Med</span>
+              <span className="text-teal-500">Clarity</span>
             </span>
           </motion.div>
 
-          <p className="text-white/40 font-mono text-xs">© 2026 JaaneKhaana. All rights reserved.</p>
+          <p className="text-white/40 font-mono text-xs">© 2026 MedClarity. All rights reserved.</p>
 
         </motion.div>
       </div>
