@@ -1,7 +1,7 @@
 'use client'
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Upload, CheckCircle, AlertCircle, FileText, Stethoscope, Volume2, Loader2, ShieldAlert, Shield, Pill, CalendarPlus, Clock, Calendar, Mail, Send } from 'lucide-react'
+import { X, Upload, CheckCircle, AlertCircle, FileText, Stethoscope, Volume2, Loader2, ShieldAlert, Shield, Pill, CalendarPlus, Clock, Calendar, Mail, Send, ArrowRight } from 'lucide-react'
 import DragDropZone from './DragDropZone'
 import FileList from './FileList'
 import { analyzeMedicalDocument, analyzeMedicalInsuranceDocs, analyzePrescription } from '@/lib/actions'
@@ -27,12 +27,8 @@ type TabType = 'lab_reports' | 'discharge_summary' | 'insurance' | 'prescription
 interface TabConfig {
   id: TabType
   name: string
-  icon: React.ReactNode
+  emoji: string
   description: string
-  descBg: string
-  descBorder: string
-  descText: string
-  supportedFormats: string
   acceptConfig: {
     'image/*'?: string[]
     'application/pdf'?: string[]
@@ -63,13 +59,9 @@ const TAB_CONFIG: Record<TabType, TabConfig> = {
   lab_reports: {
     id: 'lab_reports',
     name: 'Lab Reports',
-    icon: <Stethoscope className="w-4 h-4" />,
+    emoji: '🩺',
     description:
-      'Upload blood tests, urine reports, imaging results, or any lab report. Our AI explains what each value means for you in plain, simple language.',
-    descBg: 'bg-teal-50',
-    descBorder: 'border-teal-200',
-    descText: 'text-teal-900',
-    supportedFormats: 'Images (JPG, PNG, WebP) and PDFs',
+      'Upload your blood tests, urine reports, imaging results, or any lab report to understand what each value means.',
     acceptConfig: {
       'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'],
       'application/pdf': ['.pdf'],
@@ -77,14 +69,10 @@ const TAB_CONFIG: Record<TabType, TabConfig> = {
   },
   discharge_summary: {
     id: 'discharge_summary',
-    name: 'Discharge & Rx',
-    icon: <FileText className="w-4 h-4" />,
+    name: 'Doctor Notes',
+    emoji: '📋',
     description:
-      'Upload hospital discharge summaries, doctor notes, or prescriptions to understand your diagnosis, medications, and follow-up care in simple terms.',
-    descBg: 'bg-blue-50',
-    descBorder: 'border-blue-200',
-    descText: 'text-blue-900',
-    supportedFormats: 'Images (JPG, PNG, WebP), PDFs, DOC, DOCX',
+      'Upload hospital discharge summaries, prescriptions, or doctor notes to understand your diagnosis and medications.',
     acceptConfig: {
       'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'],
       'application/pdf': ['.pdf'],
@@ -96,13 +84,9 @@ const TAB_CONFIG: Record<TabType, TabConfig> = {
   insurance: {
     id: 'insurance',
     name: 'Insurance',
-    icon: <Shield className="w-4 h-4" />,
+    emoji: '🛡️',
     description:
-      'Upload your insurance policy along with a hospital estimate, lab report, or prescription. Our AI checks coverage, flags likely rejections, and tells you what to do next.',
-    descBg: 'bg-purple-50',
-    descBorder: 'border-purple-200',
-    descText: 'text-purple-900',
-    supportedFormats: 'Images (JPG, PNG, WebP), PDFs, DOC, DOCX',
+      'Upload your insurance documents with medical reports to check if your treatment is covered.',
     acceptConfig: {
       'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'],
       'application/pdf': ['.pdf'],
@@ -114,13 +98,9 @@ const TAB_CONFIG: Record<TabType, TabConfig> = {
   prescription: {
     id: 'prescription',
     name: 'Med Reminders',
-    icon: <Pill className="w-4 h-4" />,
+    emoji: '💊',
     description:
       'Upload a prescription to extract your medicine schedule. Download a .ics calendar file to add reminders directly to Google Calendar, Apple Calendar, or Outlook.',
-    descBg: 'bg-emerald-50',
-    descBorder: 'border-emerald-200',
-    descText: 'text-emerald-900',
-    supportedFormats: 'Images (JPG, PNG, WebP) and PDFs',
     acceptConfig: {
       'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp'],
       'application/pdf': ['.pdf'],
@@ -147,6 +127,7 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
   const [isSendingEmail, setIsSendingEmail] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
   const [emailError, setEmailError] = useState<string | null>(null)
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false)
 
   const activeTabConfig = TAB_CONFIG[activeTab]
 
@@ -268,6 +249,7 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
     setAudioUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return null })
     setTtsError(null)
     setIsGeneratingAudio(false)
+    setIsPlayingAudio(false)
     setContext('')
     setPrivacyAck(false)
     setEmailAddress('')
@@ -291,73 +273,55 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 z-60"
+            className="fixed inset-0 bg-black/50 z-40"
           />
 
           {/* Modal */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.9, y: 30 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="fixed inset-0 z-70 flex items-center justify-center p-4"
+            exit={{ opacity: 0, scale: 0.9, y: 30 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 40 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
           >
-            <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-
-              {/* Header */}
-              <div className="sticky top-0 bg-white border-b border-gray-200 px-4 sm:px-6 py-4 z-10 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg sm:text-2xl font-bold text-gray-900 leading-tight">
-                    Medical Document Explainer
+            <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden">
+              {/* Simple Header */}
+              <div className="relative bg-gradient-to-r from-blue-50 to-white border-b border-gray-100 px-8 py-8 flex items-center justify-between">
+                <div>
+                  <p className="text-5xl mb-2">{activeTabConfig.emoji}</p>
+                  <h2 className="text-3xl font-bold text-gray-900">
+                    {activeTabConfig.name}
                   </h2>
-                  <button
-                    onClick={onClose}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <X className="w-5 h-5 text-gray-600" />
-                  </button>
                 </div>
-                {/* Disclaimer badge */}
-                <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                  <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
-                  <p className="text-xs text-amber-800">
-                    <strong>Not medical advice.</strong> This tool helps you understand documents. Always consult your doctor for clinical decisions.
-                  </p>
-                </div>
+                <button
+                  onClick={onClose}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6 text-gray-600" />
+                </button>
               </div>
 
-              {/* Tabs */}
+              {/* Simple Tab Buttons */}
               {!showResults && (
-                <div className="border-b border-gray-200 px-4 sm:px-6 pt-4">
-                  <div className="flex gap-1 sm:gap-6 overflow-x-auto scrollbar-none">
-                    {Object.values(TAB_CONFIG).map((tab) => (
-                      <button
-                        key={tab.id}
-                        onClick={() => handleTabChange(tab.id)}
-                        className={`pb-4 text-xs sm:text-sm font-semibold transition-all relative whitespace-nowrap px-1 sm:px-0 ${
-                          activeTab === tab.id
-                            ? 'text-teal-600'
-                            : 'text-gray-500 hover:text-gray-900'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          {tab.icon}
-                          {tab.name}
-                        </div>
-                        {activeTab === tab.id && (
-                          <motion.div
-                            layoutId="underline"
-                            className="absolute bottom-0 left-0 right-0 h-1 bg-teal-400"
-                          />
-                        )}
-                      </button>
-                    ))}
-                  </div>
+                <div className="flex gap-2 px-8 pt-6 pb-0 overflow-x-auto">
+                  {Object.values(TAB_CONFIG).map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => handleTabChange(tab.id)}
+                      className={`px-4 py-2 rounded-full font-semibold transition-all text-sm whitespace-nowrap ${
+                        activeTab === tab.id
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {tab.emoji} {tab.name}
+                    </button>
+                  ))}
                 </div>
               )}
 
               {/* Content */}
-              <div className="px-4 sm:px-6 py-5 space-y-5">
+              <div className="px-8 pt-6 pb-8 max-h-[70vh] overflow-y-auto">
                 {showResults ? (
                   // ── Results View ──────────────────────────────────────
                   activeTab === 'prescription' ? (
@@ -525,29 +489,23 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
                   ) : (
                   // ── Standard Document Results ──────────────────────────
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-gray-900 text-lg">
-                      Explanation Results
-                    </h3>
-
-                    {/* Prominent disclaimer */}
-                    <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                      <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
-                      <p className="text-xs text-amber-800">
-                        <strong>Not medical advice.</strong> Always consult your doctor before taking any action.
-                      </p>
-                    </div>
-
                     {/* Audio player — manual trigger */}
-                    <div className="flex items-center gap-3 p-3 bg-teal-50 border border-teal-200 rounded-lg min-h-13">
-                      <Volume2 className="w-5 h-5 text-teal-600 shrink-0" />
+                    <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg min-h-13">
+                      <Volume2 className="w-5 h-5 text-blue-600 shrink-0" />
                       {isGeneratingAudio && (
-                        <div className="flex items-center gap-2 text-sm text-teal-700">
+                        <div className="flex items-center gap-2 text-sm text-blue-700">
                           <Loader2 className="w-4 h-4 animate-spin" />
                           Generating audio explanation…
                         </div>
                       )}
                       {!isGeneratingAudio && audioUrl && (
-                        <audio controls src={audioUrl} className="flex-1 h-8" />
+                        <audio 
+                          controls 
+                          src={audioUrl} 
+                          className="flex-1 h-8"
+                          onPlay={() => setIsPlayingAudio(true)}
+                          onPause={() => setIsPlayingAudio(false)}
+                        />
                       )}
                       {!isGeneratingAudio && !audioUrl && !ttsError && (
                         <button
@@ -556,7 +514,7 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
                             if (first?.analysis) handlePlayAudio(first.analysis)
                           }}
                           disabled={!analysisResults.some((r) => r.success && r.analysis)}
-                          className="text-sm font-semibold text-teal-700 hover:text-teal-900 disabled:opacity-40 disabled:cursor-not-allowed"
+                          className="text-sm font-semibold text-blue-700 hover:text-blue-900 disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           ▶ Play Audio Explanation
                         </button>
@@ -604,50 +562,48 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
                   </div>
                   )
                 ) : (
-                  // ── Upload View ───────────────────────────────────────
-                  <>
+                  // Upload View
+                  <div className="space-y-6">
                     {/* Description */}
-                    <div className={`${activeTabConfig.descBg} border ${activeTabConfig.descBorder} rounded-lg p-4`}>
-                      <p className={`text-sm ${activeTabConfig.descText}`}>
-                        {activeTabConfig.description}
-                      </p>
-                    </div>
+                    <p className="text-lg text-gray-700">
+                      {activeTabConfig.description}
+                    </p>
 
                     {/* Language selector (medical tabs only) */}
-                    {activeTab !== 'insurance' && activeTab !== 'prescription' && (
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1">
-                        Language
-                      </label>
-                      <select
-                        value={language}
-                        onChange={(e) => setLanguage(e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-teal-400"
-                      >
-                        {SUPPORTED_LANGUAGES.map((lang) => (
-                          <option key={lang.code} value={lang.code}>
-                            {lang.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    {activeTab !== 'insurance' && (
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Language
+                        </label>
+                        <select
+                          value={language}
+                          onChange={(e) => setLanguage(e.target.value)}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        >
+                          {SUPPORTED_LANGUAGES.map((lang) => (
+                            <option key={lang.code} value={lang.code}>
+                              {lang.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     )}
 
                     {/* Context / symptoms (medical tabs only) */}
-                    {activeTab !== 'insurance' && activeTab !== 'prescription' && (
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1">
-                        Context / Symptoms{' '}
-                        <span className="font-normal text-gray-500">(optional)</span>
-                      </label>
-                      <textarea
-                        value={context}
-                        onChange={(e) => setContext(e.target.value)}
-                        placeholder="e.g. I have been feeling tired. Doctor asked to check thyroid levels…"
-                        rows={2}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-teal-400 resize-none"
-                      />
-                    </div>
+                    {activeTab !== 'insurance' && (
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Context / Symptoms{' '}
+                          <span className="font-normal text-gray-500">(optional)</span>
+                        </label>
+                        <textarea
+                          value={context}
+                          onChange={(e) => setContext(e.target.value)}
+                          placeholder="e.g. I have been feeling tired. Doctor asked to check thyroid levels…"
+                          rows={2}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+                        />
+                      </div>
                     )}
 
                     {/* Privacy notice */}
@@ -660,7 +616,7 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
                           type="checkbox"
                           checked={privacyAck}
                           onChange={(e) => setPrivacyAck(e.target.checked)}
-                          className="w-4 h-4 rounded accent-teal-500"
+                          className="w-4 h-4 rounded accent-blue-500"
                         />
                         <span className="text-xs font-semibold text-red-900">
                           I have removed personal information from this document
@@ -675,51 +631,64 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
                       acceptConfig={activeTabConfig.acceptConfig}
                     />
 
-                    {/* Supported Formats */}
-                    <div className="text-center text-xs text-gray-500 space-y-1">
-                      <p>Supported: {activeTabConfig.supportedFormats}</p>
-                      <p>Max file size: 10MB each</p>
-                    </div>
-
                     {/* File List */}
-                    <FileList
-                      files={uploadedFiles}
-                      onRemoveFile={removeFile}
-                      isLoading={isLoading}
-                    />
-                  </>
+                    {uploadedFiles.length > 0 && (
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 mb-3">
+                          {uploadedFiles.length} file{uploadedFiles.length > 1 ? 's' : ''} selected
+                        </p>
+                        <FileList
+                          files={uploadedFiles}
+                          onRemoveFile={removeFile}
+                          isLoading={isLoading}
+                        />
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
 
-              {/* Footer */}
-              <div className="sticky bottom-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-4 flex flex-wrap items-center justify-end gap-2 sm:gap-3 z-10">
+              {/* Simple Footer */}
+              <div className="bg-gray-50 border-t border-gray-100 px-8 py-4 flex items-center justify-between gap-3">
                 <button
-                  onClick={showResults ? () => { handleReset(); onClose() } : onClose}
-                  className="flex-1 sm:flex-none px-6 py-2.5 text-gray-700 font-semibold border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  onClick={
+                    showResults ? () => { handleReset(); onClose(); } : onClose
+                  }
+                  className="px-6 py-2.5 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors"
                   disabled={isLoading}
                 >
-                  {showResults ? 'Close' : 'Cancel'}
+                  {showResults ? 'Done' : 'Cancel'}
                 </button>
+
                 {!showResults && (
-                  <button
+                  <motion.button
                     onClick={handleAnalyze}
                     disabled={uploadedFiles.length === 0 || isLoading || !privacyAck}
-                    className={`flex-1 sm:flex-none px-6 py-2.5 font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 ${
+                    whileHover={uploadedFiles.length > 0 && !isLoading && privacyAck ? { scale: 1.05 } : {}}
+                    whileTap={uploadedFiles.length > 0 && !isLoading && privacyAck ? { scale: 0.95 } : {}}
+                    className={`px-8 py-2.5 font-semibold rounded-lg transition-all flex items-center gap-2 ${
                       uploadedFiles.length === 0 || isLoading || !privacyAck
                         ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        : 'bg-teal-500 text-white hover:bg-teal-600'
+                        : 'bg-blue-500 text-white hover:bg-blue-600'
                     }`}
                   >
-                    {isLoading && (
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity }}
-                        className="w-4 h-4"
-                      >
-                        <Upload className="w-4 h-4" />
-                      </motion.div>
+                    {isLoading ? (
+                      <>
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity }}
+                          className="w-4 h-4"
+                        >
+                          <div className="w-4 h-4 border-2 border-transparent border-t-current rounded-full" />
+                        </motion.div>
+                        Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        {activeTab === 'prescription' ? 'Extract Schedule' : 'Explain Document'}
+                        <ArrowRight className="w-4 h-4" />
+                      </>
                     )}
-                    {isLoading ? 'Analyzing...' : activeTab === 'prescription' ? 'Extract Schedule' : 'Explain Document'}
                   </button>
                 )}
                 {showResults && activeTab === 'prescription' && hasCalendarEligibleMedicines(medicineSchedules) && (
@@ -735,12 +704,15 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
                   </motion.button>
                 )}
                 {showResults && (
-                  <button
+                  <motion.button
                     onClick={handleReset}
-                    className="flex-1 sm:flex-none px-6 py-2.5 font-semibold rounded-lg bg-teal-500 text-white hover:bg-teal-600 transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-8 py-2.5 font-semibold rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center gap-2"
                   >
-                    Analyze Another
-                  </button>
+                    Try Another
+                    <ArrowRight className="w-4 h-4" />
+                  </motion.button>
                 )}
               </div>
 

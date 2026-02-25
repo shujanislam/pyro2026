@@ -66,7 +66,7 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-4">
             <motion.button
               onClick={openTryNow}
-              className="bg-[#AFFF00] text-[#121212] px-6 py-2.5 rounded-full font-bold text-sm relative overflow-hidden"
+              className="bg-teal-500 text-black px-6 py-2.5 rounded-full font-bold text-sm relative overflow-hidden"
             >
               <motion.div
                 className="absolute inset-0 cursor-pointer bg-white/30"
@@ -80,7 +80,7 @@ export default function Navbar() {
               href="https://t.me/MedEase_bot"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-[#AFFF00] text-[#121212] px-6 py-2.5 rounded-full font-bold text-sm inline-block"
+              className="bg-teal-500 text-black px-6 py-2.5 rounded-full font-bold text-sm inline-block"
             >
               Go to Bot
             </motion.a>
