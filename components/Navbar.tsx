@@ -61,6 +61,7 @@ export default function Navbar() {
             </span>
           </a>
 
+
           {/* Desktop CTAs */}
           <div className="hidden md:flex items-center gap-4">
             <motion.button
