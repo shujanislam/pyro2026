@@ -39,7 +39,7 @@ export default function FileList({
             className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <div className="flex-shrink-0 text-gray-400">
+              <div className="shrink-0 text-gray-400">
                 {getFileIcon(file)}
               </div>
               <div className="min-w-0">
@@ -54,7 +54,7 @@ export default function FileList({
             <button
               onClick={() => onRemoveFile(index)}
               disabled={isLoading}
-              className="flex-shrink-0 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+              className="shrink-0 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
             >
               <X className="w-4 h-4" />
             </button>

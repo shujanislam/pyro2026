@@ -1,10 +1,11 @@
 'use client'
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Upload, CheckCircle, AlertCircle, Image as ImageIcon, FileText } from 'lucide-react'
+import { X, Upload, CheckCircle, AlertCircle, Image as ImageIcon, FileText, Volume2, Loader2 } from 'lucide-react'
 import DragDropZone from './DragDropZone'
 import FileList from './FileList'
 import { analyzeFoodLabel, analyzeMedicalInsuranceDocs } from '@/lib/actions'
+import { SUPPORTED_LANGUAGES } from '@/lib/elevenlabs'
 
 interface DragDropModalProps {
   isOpen: boolean
@@ -80,6 +81,10 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
   const [analysisResults, setAnalysisResults] = useState<AnalysisResult[]>([])
   const [showResults, setShowResults] = useState(false)
   const [isDragActive, setIsDragActive] = useState(false)
+  const [language, setLanguage] = useState('en')
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false)
+  const [ttsError, setTtsError] = useState<string | null>(null)
 
   const activeTabConfig = TAB_CONFIG[activeTab]
 
@@ -105,7 +110,7 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
       let response
 
       if (activeTab === 'food') {
-        response = await analyzeFoodLabel(formData)
+        response = await analyzeFoodLabel(formData, language)
       } else {
         response = await analyzeMedicalInsuranceDocs(formData)
       }
@@ -113,6 +118,34 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
       if (response.success && response.data) {
         setAnalysisResults(response.data)
         setShowResults(true)
+
+        // Auto-generate TTS for the first successful food analysis result
+        if (activeTab === 'food') {
+          const firstSuccess = response.data.find((r) => r.success && r.analysis)
+          if (firstSuccess?.analysis) {
+            setIsGeneratingAudio(true)
+            setTtsError(null)
+            try {
+              const ttsRes = await fetch('/api/elevenlabs/tts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: firstSuccess.analysis, language }),
+              })
+              if (ttsRes.ok) {
+                const blob = await ttsRes.blob()
+                // Revoke previous object URL to avoid memory leaks
+                setAudioUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(blob) })
+              } else {
+                const errJson = await ttsRes.json().catch(() => ({}))
+                setTtsError(errJson.error ?? 'Audio generation failed')
+              }
+            } catch (ttsErr) {
+              setTtsError(ttsErr instanceof Error ? ttsErr.message : 'Audio generation failed')
+            } finally {
+              setIsGeneratingAudio(false)
+            }
+          }
+        }
       } else {
         setAnalysisResults([
           {
@@ -142,6 +175,9 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
     setUploadedFiles([])
     setAnalysisResults([])
     setShowResults(false)
+    setAudioUrl((prev) => { if (prev) URL.revokeObjectURL(prev); return null })
+    setTtsError(null)
+    setIsGeneratingAudio(false)
   }
 
   const handleTabChange = (tab: TabType) => {
@@ -222,6 +258,29 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
                     <h3 className="font-semibold text-gray-900 text-lg">
                       Analysis Results
                     </h3>
+
+                    {/* Audio player (food tab only) */}
+                    {activeTab === 'food' && (
+                      <div className="flex items-center gap-3 p-3 bg-lime-50 border border-lime-200 rounded-lg min-h-13">
+                        <Volume2 className="w-5 h-5 text-lime-600 shrink-0" />
+                        {isGeneratingAudio && (
+                          <div className="flex items-center gap-2 text-sm text-lime-700">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Generating voice preview…
+                          </div>
+                        )}
+                        {!isGeneratingAudio && audioUrl && (
+                          <audio controls src={audioUrl} className="flex-1 h-8" />
+                        )}
+                        {!isGeneratingAudio && !audioUrl && !ttsError && (
+                          <span className="text-sm text-lime-600">No audio generated</span>
+                        )}
+                        {ttsError && (
+                          <span className="text-sm text-red-600">{ttsError}</span>
+                        )}
+                      </div>
+                    )}
+
                     {analysisResults.map((result, index) => (
                       <motion.div
                         key={index}
@@ -234,7 +293,7 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
                         }`}
                       >
                         <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 mt-1">
+                          <div className="shrink-0 mt-1">
                             {result.success ? (
                               <CheckCircle className="w-5 h-5 text-green-600" />
                             ) : (
@@ -272,6 +331,26 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
                         {activeTabConfig.description}
                       </p>
                     </div>
+
+                    {/* Language selector (food tab only) */}
+                    {activeTab === 'food' && (
+                      <div className="flex items-center gap-3">
+                        <label className="text-sm font-semibold text-gray-700 shrink-0">
+                          Voice language
+                        </label>
+                        <select
+                          value={language}
+                          onChange={(e) => setLanguage(e.target.value)}
+                          className="flex-1 border border-gray-300 rounded-lg px-3 py-1.5 text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-lime-400"
+                        >
+                          {SUPPORTED_LANGUAGES.map((lang) => (
+                            <option key={lang.code} value={lang.code}>
+                              {lang.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
 
                     {/* Drag Drop Zone */}
                     <DragDropZone
