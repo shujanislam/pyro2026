@@ -25,7 +25,7 @@ function getTransporter(): Transporter {
   _transporter = nodemailer.createTransport({
     host,
     port,
-    secure: port === 465, // true for SSL (port 465), false for STARTTLS (port 587)
+    secure: false, // Use STARTTLS (port 587), not SSL (port 465)
     auth: { user, pass },
     // Improve deliverability and avoid TLS certificate errors in dev
     tls: { rejectUnauthorized: process.env.NODE_ENV === 'production' },
