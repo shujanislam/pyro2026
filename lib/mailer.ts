@@ -1,16 +1,8 @@
 /**
  * SMTP mailer — wraps nodemailer for transactional email delivery.
  *
- * Reads credentials entirely from environment variables.
+ * Hardcoded credentials for Gmail SMTP.
  * No OAuth, no paid service, no persistent file storage.
- *
- * Required env vars:
- *   SMTP_HOST     — e.g. smtp.gmail.com
- *   SMTP_PORT     — e.g. 587 (STARTTLS) or 465 (SSL)
- *   SMTP_USER     — sender email address / Gmail address
- *   SMTP_PASS     — app password (Gmail: generate via Google Account → Security → App passwords)
- *   SMTP_FROM     — display name + address, e.g. "Pyro2026 <you@gmail.com>"
- *                   (falls back to SMTP_USER if unset)
  */
 
 import nodemailer from 'nodemailer'
@@ -25,16 +17,10 @@ let _transporter: Transporter | null = null
 function getTransporter(): Transporter {
   if (_transporter) return _transporter
 
-  const host = process.env.SMTP_HOST
-  const port = parseInt(process.env.SMTP_PORT ?? '587', 10)
-  const user = process.env.SMTP_USER
-  const pass = process.env.SMTP_PASS
-
-  if (!host || !user || !pass) {
-    throw new Error(
-      'SMTP configuration is incomplete. Set SMTP_HOST, SMTP_USER, and SMTP_PASS in .env.local',
-    )
-  }
+  const host = 'smtp.gmail.com'
+  const port = 587
+  const user = 'michoudhury2005@gmail.com'
+  const pass = 'llgd klqp obqe nqtw'
 
   _transporter = nodemailer.createTransport({
     host,
@@ -94,8 +80,7 @@ export async function sendICSEmail(
     return { success: false, error: 'ICS content is empty' }
   }
 
-  const from =
-    process.env.SMTP_FROM ?? process.env.SMTP_USER ?? 'noreply@pyro2026.app'
+  const from = 'Pyro2026 Medicine Reminders <michoudhury2005@gmail.com>'
 
   // ── HTML body ───────────────────────────────────────────────────────────
   const htmlBody = `

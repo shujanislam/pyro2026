@@ -29,8 +29,7 @@ export async function analyzeBloodReportBuffer(
   const scriptHint = SCRIPT_HINTS[language] ?? ''
 
   try {
-    const apiKey = process.env.GEMINI_API_KEY
-    if (!apiKey) throw new Error('GEMINI_API_KEY environment variable is not set')
+    const apiKey = 'AIzaSyCR18goQwX4xKjctMie4tLpcpH6zPjFuZE'
 
     const client = new GoogleGenerativeAI(apiKey)
     const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' })
@@ -119,8 +118,7 @@ export async function analyzeMedicalDocument(
   const scriptHint = SCRIPT_HINTS[language] ?? ''
 
   try {
-    const apiKey = process.env.GEMINI_API_KEY
-    if (!apiKey) throw new Error('GEMINI_API_KEY environment variable is not set')
+    const apiKey = 'AIzaSyCR18goQwX4xKjctMie4tLpcpH6zPjFuZE'
 
     const client = new GoogleGenerativeAI(apiKey)
     const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' })
@@ -182,11 +180,7 @@ Document: [attached image]`
 
 export async function analyzeMedicalInsuranceDocs(formData: FormData) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY
-
-    if (!apiKey) {
-      throw new Error('GEMINI_API_KEY environment variable is not set')
-    }
+    const apiKey = 'AIzaSyCR18goQwX4xKjctMie4tLpcpH6zPjFuZE'
 
     const client = new GoogleGenerativeAI(apiKey)
     const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' })
@@ -320,8 +314,7 @@ export async function analyzePrescription(
   formData: FormData,
 ): Promise<PrescriptionAnalysisResult> {
   try {
-    const apiKey = process.env.GEMINI_API_KEY
-    if (!apiKey) throw new Error('GEMINI_API_KEY environment variable is not set')
+    const apiKey = 'AIzaSyCR18goQwX4xKjctMie4tLpcpH6zPjFuZE'
 
     const client = new GoogleGenerativeAI(apiKey)
     const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' })
