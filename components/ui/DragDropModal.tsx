@@ -2,15 +2,26 @@
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useDropzone } from 'react-dropzone'
-import { X, Upload, File, Image as ImageIcon } from 'lucide-react'
+import { X, Upload, File, Image as ImageIcon, CheckCircle, AlertCircle } from 'lucide-react'
+import { analyzeFoodLabel } from '@/lib/actions'
 
 interface DragDropModalProps {
   isOpen: boolean
   onClose: () => void
 }
 
+interface AnalysisResult {
+  fileName: string
+  analysis?: string
+  error?: string
+  success: boolean
+}
+
 export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [analysisResults, setAnalysisResults] = useState<AnalysisResult[]>([])
+  const [showResults, setShowResults] = useState(false)
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setUploadedFiles((prev) => [...prev, ...acceptedFiles])
@@ -28,15 +39,56 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index))
   }
 
-  const handleAnalyze = () => {
-    if (uploadedFiles.length > 0) {
-      console.log('Analyzing files:', uploadedFiles)
-      // TODO: Implement file analysis logic here
-      alert(`Analyzing ${uploadedFiles.length} file(s)...`)
+  const handleAnalyze = async () => {
+    if (uploadedFiles.length === 0) return
+
+    setIsLoading(true)
+    try {
+      const formData = new FormData()
+      uploadedFiles.forEach((file) => {
+        formData.append('files', file)
+      })
+
+      const response = await analyzeFoodLabel(formData)
+
+      if (response.success && response.data) {
+        setAnalysisResults(response.data)
+        setShowResults(true)
+      } else {
+        setAnalysisResults([
+          {
+            fileName: 'Error',
+            error: response.error || 'Failed to analyze files',
+            success: false,
+          },
+        ])
+        setShowResults(true)
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred'
+      setAnalysisResults([
+        {
+          fileName: 'Error',
+          error: errorMessage,
+          success: false,
+        },
+      ])
+      setShowResults(true)
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const getFileIcon = (file: File) => {
+  const handleReset = () => {
+    setUploadedFiles([])
+    setAnalysisResults([])
+    setShowResults(false)
+  }
+
+  const getFileIcon = (file: File | string) => {
+    if (typeof file === 'string') {
+      return <File className="w-4 h-4" />
+    }
     if (file.type.startsWith('image/')) {
       return <ImageIcon className="w-4 h-4" />
     }
@@ -78,103 +130,183 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
 
               {/* Content */}
               <div className="p-6 space-y-6">
-                {/* Drag Drop Zone */}
-                <div
-                  {...getRootProps()}
-                  className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all ${
-                    isDragActive
-                      ? 'border-lime-400 bg-lime-50'
-                      : 'border-gray-300 hover:border-gray-400 bg-gray-50'
-                  }`}
-                >
-                  <input {...getInputProps()} />
-                  <motion.div
-                    animate={isDragActive ? { scale: 1.1 } : { scale: 1 }}
-                    className="flex flex-col items-center gap-3"
-                  >
-                    <Upload className={`w-12 h-12 ${isDragActive ? 'text-lime-400' : 'text-gray-400'}`} />
-                    <div>
-                      <p className="text-lg font-semibold text-gray-900">
-                        {isDragActive ? 'Drop your files here' : 'Drag & drop your files here'}
-                      </p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        or click to select files
-                      </p>
-                    </div>
-                    <div className="text-xs text-gray-500 mt-2 space-y-1">
-                      <p>Supported: Images (JPG, PNG, GIF, WebP) and PDFs</p>
-                      <p>Max file size: 10MB each</p>
-                    </div>
-                  </motion.div>
-                </div>
-
-                {/* File List */}
-                {uploadedFiles.length > 0 && (
-                  <div className="space-y-3">
-                    <h3 className="font-semibold text-gray-900">
-                      Uploaded Files ({uploadedFiles.length})
+                {showResults ? (
+                  // Results View
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-gray-900 text-lg">
+                      Analysis Results
                     </h3>
-                    <div className="space-y-2">
-                      {uploadedFiles.map((file, index) => (
-                        <motion.div
-                          key={`${file.name}-${index}`}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -20 }}
-                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="flex-shrink-0 text-gray-400">
-                              {getFileIcon(file)}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">
-                                {file.name}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {(file.size / 1024).toFixed(2)} KB
-                              </p>
+                    {analysisResults.map((result, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={`p-4 rounded-lg border ${
+                          result.success
+                            ? 'bg-green-50 border-green-200'
+                            : 'bg-red-50 border-red-200'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 mt-1">
+                            {result.success ? (
+                              <CheckCircle className="w-5 h-5 text-green-600" />
+                            ) : (
+                              <AlertCircle className="w-5 h-5 text-red-600" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-gray-900 mb-2">
+                              {result.fileName}
+                            </p>
+                            <div
+                              className={`text-sm whitespace-pre-wrap ${
+                                result.success
+                                  ? 'text-gray-700'
+                                  : 'text-red-700'
+                              }`}
+                            >
+                              {result.success
+                                ? result.analysis
+                                : `Error: ${result.error}`}
                             </div>
                           </div>
-                          <button
-                            onClick={() => removeFile(index)}
-                            className="flex-shrink-0 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </motion.div>
-                      ))}
-                    </div>
+                        </div>
+                      </motion.div>
+                    ))}
                   </div>
-                )}
+                ) : (
+                  // Upload View
+                  <>
+                    {/* Drag Drop Zone */}
+                    <div
+                      {...getRootProps()}
+                      className={`border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all ${
+                        isDragActive
+                          ? 'border-lime-400 bg-lime-50'
+                          : 'border-gray-300 hover:border-gray-400 bg-gray-50'
+                      }`}
+                    >
+                      <input {...getInputProps()} />
+                      <motion.div
+                        animate={isDragActive ? { scale: 1.1 } : { scale: 1 }}
+                        className="flex flex-col items-center gap-3"
+                      >
+                        <Upload
+                          className={`w-12 h-12 ${
+                            isDragActive ? 'text-lime-400' : 'text-gray-400'
+                          }`}
+                        />
+                        <div>
+                          <p className="text-lg font-semibold text-gray-900">
+                            {isDragActive
+                              ? 'Drop your files here'
+                              : 'Drag & drop your files here'}
+                          </p>
+                          <p className="text-sm text-gray-500 mt-1">
+                            or click to select files
+                          </p>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-2 space-y-1">
+                          <p>
+                            Supported: Images (JPG, PNG, GIF, WebP) and PDFs
+                          </p>
+                          <p>Max file size: 10MB each</p>
+                        </div>
+                      </motion.div>
+                    </div>
 
-                {/* Info Text */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-900">
-                    Our AI will analyze the nutritional information, ingredients, and allergens from your food labels.
-                  </p>
-                </div>
+                    {/* File List */}
+                    {uploadedFiles.length > 0 && (
+                      <div className="space-y-3">
+                        <h3 className="font-semibold text-gray-900">
+                          Uploaded Files ({uploadedFiles.length})
+                        </h3>
+                        <div className="space-y-2">
+                          {uploadedFiles.map((file, index) => (
+                            <motion.div
+                              key={`${file.name}-${index}`}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: -20 }}
+                              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="flex-shrink-0 text-gray-400">
+                                  {getFileIcon(file)}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 truncate">
+                                    {file.name}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    {(file.size / 1024).toFixed(2)} KB
+                                  </p>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => removeFile(index)}
+                                disabled={isLoading}
+                                className="flex-shrink-0 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Info Text */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <p className="text-sm text-blue-900">
+                        Our AI will analyze the nutritional information,
+                        ingredients, and allergens from your food labels.
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Footer */}
               <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex items-center justify-end gap-3">
                 <button
-                  onClick={onClose}
-                  className="px-6 py-2 text-gray-700 font-semibold border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  onClick={showResults ? () => { handleReset(); onClose(); } : onClose}
+                  className="px-6 py-2 text-gray-700 font-semibold border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  disabled={isLoading}
                 >
-                  Cancel
+                  {showResults ? 'Close' : 'Cancel'}
                 </button>
-                <button
-                  onClick={handleAnalyze}
-                  disabled={uploadedFiles.length === 0}
-                  className={`px-6 py-2 font-semibold rounded-lg transition-colors ${
-                    uploadedFiles.length === 0
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-lime-400 text-black hover:bg-lime-500'
-                  }`}
-                >
-                  Analyze Files
-                </button>
+                {!showResults && (
+                  <button
+                    onClick={handleAnalyze}
+                    disabled={uploadedFiles.length === 0 || isLoading}
+                    className={`px-6 py-2 font-semibold rounded-lg transition-colors flex items-center gap-2 ${
+                      uploadedFiles.length === 0 || isLoading
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-lime-400 text-black hover:bg-lime-500'
+                    }`}
+                  >
+                    {isLoading && (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity }}
+                        className="w-4 h-4"
+                      >
+                        <Upload className="w-4 h-4" />
+                      </motion.div>
+                    )}
+                    {isLoading ? 'Analyzing...' : 'Analyze Files'}
+                  </button>
+                )}
+                {showResults && (
+                  <button
+                    onClick={handleReset}
+                    className="px-6 py-2 font-semibold rounded-lg bg-lime-400 text-black hover:bg-lime-500 transition-colors"
+                  >
+                    Analyze More
+                  </button>
+                )}
               </div>
             </div>
           </motion.div>
