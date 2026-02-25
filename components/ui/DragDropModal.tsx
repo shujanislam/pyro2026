@@ -284,12 +284,12 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
             transition={{ type: 'spring', stiffness: 400, damping: 40 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
           >
-            <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden">
+            <div className="bg-white rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden">
               {/* Simple Header */}
-              <div className="relative bg-gradient-to-r from-blue-50 to-white border-b border-gray-100 px-8 py-8 flex items-center justify-between">
+              <div className="relative bg-gradient-to-r from-blue-50 to-white border-b border-gray-100 px-8 py-6 flex items-center justify-between">
                 <div>
-                  <p className="text-5xl mb-2">{activeTabConfig.emoji}</p>
-                  <h2 className="text-3xl font-bold text-gray-900">
+                  <p className="text-4xl mb-1.5">{activeTabConfig.emoji}</p>
+                  <h2 className="text-2xl font-bold text-gray-900">
                     {activeTabConfig.name}
                   </h2>
                 </div>
@@ -303,7 +303,7 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
 
               {/* Simple Tab Buttons */}
               {!showResults && (
-                <div className="flex gap-2 px-8 pt-6 pb-0 overflow-x-auto">
+                <div className="flex gap-2 px-8 pt-5 pb-0 overflow-x-auto">
                   {Object.values(TAB_CONFIG).map((tab) => (
                     <button
                       key={tab.id}
@@ -321,7 +321,7 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
               )}
 
               {/* Content */}
-              <div className="px-8 pt-6 pb-8 max-h-[70vh] overflow-y-auto">
+              <div className="px-8 pt-5 pb-6 max-h-[60vh] overflow-y-auto">
                 {showResults ? (
                   // ── Results View ──────────────────────────────────────
                   activeTab === 'prescription' ? (
@@ -654,7 +654,7 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
                   onClick={
                     showResults ? () => { handleReset(); onClose(); } : onClose
                   }
-                  className="px-6 py-2.5 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors"
+                  className="px-5 py-2 text-sm text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors"
                   disabled={isLoading}
                 >
                   {showResults ? 'Done' : 'Cancel'}
@@ -666,7 +666,7 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
                     disabled={uploadedFiles.length === 0 || isLoading || !privacyAck}
                     whileHover={uploadedFiles.length > 0 && !isLoading && privacyAck ? { scale: 1.05 } : {}}
                     whileTap={uploadedFiles.length > 0 && !isLoading && privacyAck ? { scale: 0.95 } : {}}
-                    className={`px-8 py-2.5 font-semibold rounded-lg transition-all flex items-center gap-2 ${
+                    className={`px-6 py-2 text-sm font-semibold rounded-lg transition-all flex items-center gap-2 ${
                       uploadedFiles.length === 0 || isLoading || !privacyAck
                         ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         : 'bg-blue-500 text-white hover:bg-blue-600'
@@ -689,7 +689,7 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}
-                  </button>
+                  </motion.button>
                 )}
                 {showResults && activeTab === 'prescription' && hasCalendarEligibleMedicines(medicineSchedules) && (
                   <motion.button
@@ -697,7 +697,7 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
                     disabled={isDownloadingICS}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.97 }}
-                    className="flex-1 sm:flex-none px-6 py-2.5 font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 sm:flex-none px-5 py-2 text-sm font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white transition-colors flex items-center justify-center gap-2"
                   >
                     {isDownloadingICS ? <Loader2 className="w-4 h-4 animate-spin" /> : <CalendarPlus className="w-4 h-4" />}
                     {isDownloadingICS ? 'Preparing…' : 'Download .ics'}
@@ -708,7 +708,7 @@ export default function DragDropModal({ isOpen, onClose }: DragDropModalProps) {
                     onClick={handleReset}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="px-8 py-2.5 font-semibold rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center gap-2"
+                    className="px-6 py-2 text-sm font-semibold rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center gap-2"
                   >
                     Try Another
                     <ArrowRight className="w-4 h-4" />

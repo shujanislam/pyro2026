@@ -41,7 +41,7 @@ function bufferToGenerativePart(fileBuffer: Buffer, mimeType: string) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Blood Report Analyser — Buffer-based (Telegram bot)
+// Blood Report Analyser — Buffer-based
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function analyzeBloodReportBuffer(
@@ -53,7 +53,8 @@ export async function analyzeBloodReportBuffer(
   const scriptHint  = getScriptHint(language)
 
   try {
-    const apiKey = 'AIzaSyCR18goQwX4xKjctMie4tLpcpH6zPjFuZE'
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) throw new Error('GEMINI_API_KEY environment variable is not set')
 
     const client = new GoogleGenerativeAI(apiKey)
     const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' })
@@ -109,7 +110,8 @@ export async function analyzeMedicalDocument(
   const scriptHint  = getScriptHint(language)
 
   try {
-    const apiKey = 'AIzaSyCR18goQwX4xKjctMie4tLpcpH6zPjFuZE'
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) throw new Error('GEMINI_API_KEY environment variable is not set')
 
     const client = new GoogleGenerativeAI(apiKey)
     const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' })
@@ -168,7 +170,7 @@ Document: [attached image]`
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Medical Document Explainer — Buffer-based (Telegram bot)
+// Medical Document Explainer — Buffer-based
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function analyzeMedicalDocumentBuffer(
@@ -281,7 +283,8 @@ Guardrails:
 
 export async function analyzeMedicalInsuranceDocs(formData: FormData) {
   try {
-    const apiKey = 'AIzaSyCR18goQwX4xKjctMie4tLpcpH6zPjFuZE'
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) throw new Error('GEMINI_API_KEY environment variable is not set')
 
     const client = new GoogleGenerativeAI(apiKey)
     const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' })
@@ -319,7 +322,7 @@ export async function analyzeMedicalInsuranceDocs(formData: FormData) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Medical Insurance Analyser — Buffer-based (Telegram bot)
+// Medical Insurance Analyser — Buffer-based
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function analyzeMedicalInsuranceBuffer(
@@ -450,7 +453,8 @@ export async function analyzePrescription(
   formData: FormData,
 ): Promise<PrescriptionAnalysisResult> {
   try {
-    const apiKey = 'AIzaSyCR18goQwX4xKjctMie4tLpcpH6zPjFuZE'
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) throw new Error('GEMINI_API_KEY environment variable is not set')
 
     const client = new GoogleGenerativeAI(apiKey)
     const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' })
@@ -463,7 +467,7 @@ export async function analyzePrescription(
       files.map(async (file) => {
         const arrayBuffer = await file.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
-        return fileToGenerativePart(buffer, file.type || 'application/octet-stream')
+        return bufferToGenerativePart(buffer, file.type || 'application/octet-stream')
       }),
     )
 
